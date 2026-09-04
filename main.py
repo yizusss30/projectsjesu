@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -5,6 +6,9 @@ import uvicorn
 import os
 
 app = FastAPI()
+
+# --- NUEVO: Memoria para recordar mensajes ya respondidos y evitar duplicados ---
+mensajes_procesados = set()
 
 # Configuración de CORS para evitar bloqueos
 app.add_middleware(
@@ -26,7 +30,7 @@ def procesar_mensaje(texto):
     if "precio" in texto or "costo" in texto or texto == "1":
         return "Los costos de matrícula varían según la carrera. Puedes preguntar por tu carrera a este numero: 0426-9723515 o visitar la pagina web: usm.terna.net 💸"
     elif "papel" in texto or "requisito" in texto or texto == "2":
-        return "Para formalizar tu incscripción necesitas: Notas certificadas, Título de bachiller,Certificado de la OPSU, Partida de nacimiento. Para más información aqui esta el numero de planeamiento y admisión: 0414-5757609📁"
+        return "Para formalizar tu inscripción necesitas: Notas certificadas, Título de bachiller, Certificado de la OPSU, Partida de nacimiento. Para más información aqui esta el numero de planeamiento y admisión: 0414-5757609 📁"
     elif "inscripcion" in texto or "pagina" in texto or texto == "3":
         return "El proceso es en usm.terna.net . Guía paso a paso en publicaciones destacadas en nuestro perfil 🌐"
     elif "carrera" in texto or "ofrecen" in texto or texto == "4":
@@ -77,7 +81,7 @@ async def verificar_webhook(request: Request):
         return Response(content=challenge, media_type="text/plain")
     return Response(content="Error de verificación", status_code=403)
 
-# Endpoint para recibir los mensajes de Instagram (POST) con filtro de ecos
+# Endpoint para recibir los mensajes de Instagram (POST)
 
 
 @app.post("/webhook")
@@ -88,22 +92,31 @@ async def recibir_mensajes(request: Request):
         if body.get("object") == "instagram":
             for entry in body["entry"]:
                 for evento in entry.get("messaging", []):
+
                     # FILTRO ESTRICTO: Solo procesar si el evento tiene un "message" con texto real
                     if "message" in evento and "text" in evento["message"]:
                         mensaje_datos = evento["message"]
+
+                        # --- NUEVO: Evitar mensajes dobles verificando el ID (mid) ---
+                        mid = mensaje_datos.get("mid")
+                        if mid in mensajes_procesados:
+                            print(
+                                "Mensaje duplicado descartado para evitar doble respuesta.")
+                            continue
+                        if mid:
+                            mensajes_procesados.add(mid)
 
                         # Ignorar ecos (mensajes enviados por la propia cuenta de la USM)
                         if mensaje_datos.get("is_echo"):
                             continue
 
-                        # Ignorar si es una respuesta a una historia u otro tipo que no sea chat directo con ID de emisor
+                        # Ignorar si es una respuesta a una historia u otro tipo que no sea chat directo
                         if "sender" not in evento or "id" not in evento["sender"]:
                             continue
 
                         id_estudiante = evento["sender"]["id"]
                         texto_recibido = mensaje_datos["text"]
 
-                        # Evitar duplicados por ID de mensaje si Meta reintenta la petición
                         print(
                             f"Mensaje válido recibido de {id_estudiante}: {texto_recibido}")
 
