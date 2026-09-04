@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # En la nube, es mejor usar variables de entorno, pero por ahora pongámoslas aquí
-META_TOKEN = "AQUÍ_VA_TU_TOKEN_LARGO_DE_INSTAGRAM"
+META_TOKEN = "IGAAO5Ql0bFblBZAGJHUXMyb2t6N08tTC1VS3J6NnRwN2RXejg3d0NYZAGhfXzBVODFOVl9QakRReENsTC1iczhuRDh2bEtITVJNalNyRE4wRU14cGJCYmVMT0JUYy1oaEhDMEJCbXRxLVc3aTZAmQ0c0ZAUljMVY4YXp5ZAkFBMVJZAQQZDZD"
 VERIFY_TOKEN = "usm_bot_token_2026"
 
 
