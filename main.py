@@ -88,17 +88,28 @@ async def recibir_mensajes(request: Request):
         if body.get("object") == "instagram":
             for entry in body["entry"]:
                 for evento in entry.get("messaging", []):
+                    # FILTRO ESTRICTO: Solo procesar si el evento tiene un "message" con texto real
                     if "message" in evento and "text" in evento["message"]:
+                        mensaje_datos = evento["message"]
 
-                        # Filtro para ignorar mensajes salientes de la propia cuenta
-                        if evento["message"].get("is_echo"):
+                        # Ignorar ecos (mensajes enviados por la propia cuenta de la USM)
+                        if mensaje_datos.get("is_echo"):
+                            continue
+
+                        # Ignorar si es una respuesta a una historia u otro tipo que no sea chat directo con ID de emisor
+                        if "sender" not in evento or "id" not in evento["sender"]:
                             continue
 
                         id_estudiante = evento["sender"]["id"]
-                        texto_recibido = evento["message"]["text"]
+                        texto_recibido = mensaje_datos["text"]
+
+                        # Evitar duplicados por ID de mensaje si Meta reintenta la petición
+                        print(
+                            f"Mensaje válido recibido de {id_estudiante}: {texto_recibido}")
 
                         respuesta = procesar_mensaje(texto_recibido)
                         enviar_mensaje_instagram(id_estudiante, respuesta)
+
     except Exception as e:
         print(f"Error procesando mensaje: {e}")
 
