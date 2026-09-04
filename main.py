@@ -51,8 +51,10 @@ def enviar_mensaje_instagram(id_usuario, texto_respuesta):
         "recipient": {"id": id_usuario},
         "message": {"text": texto_respuesta}
     }
-    requests.post(url, headers=headers, json=data)
-
+    # ESTAS SON LAS LÍNEAS NUEVAS PARA DETECTAR EL ERROR:
+    respuesta = requests.post(url, headers=headers, json=data)
+    print(
+        f"INTENTO DE RESPUESTA A META: {respuesta.status_code} - {respuesta.text}")
 # Endpoint de Salud (Para que Render sepa que la app está viva)
 
 
